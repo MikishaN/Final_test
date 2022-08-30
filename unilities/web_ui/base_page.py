@@ -1,3 +1,5 @@
+from selenium.common import TimeoutException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -5,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 class BasePage:
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(self.driver, 15)
+        self.wait = WebDriverWait(self.driver, 5)
 
     def wait_for_element_located(self, locator):
         return self.wait.until(EC.presence_of_element_located(locator))
@@ -15,6 +17,9 @@ class BasePage:
 
     def wait_for_elements_located(self, locator):
         return self.wait.until(EC.presence_of_all_elements_located(locator))
+
+    def move_to_element(self, locator):
+        ActionChains(self.driver).move_to_element(locator).perform()
 
     def get_text(self, locator):
         element = self.wait_for_element_located(locator)
@@ -31,7 +36,23 @@ class BasePage:
                 element.click()
                 break
 
+    def send_keys(self, locator, value, is_clear=False):
+        element = self.wait_for_element_located(locator)
+        if is_clear:
+            element.clear()
+        element.send_keys(value)
 
-            # if element.get_attribute('aria-label') == value:
-            #     element.click()
-            #     break
+    def is_element_present(self, locator):
+        try:
+            self.wait_for_element_located(locator)
+            return True
+        except TimeoutException:
+            return False
+
+    def is_element_active(self, locator):
+            element = self.wait_for_element_located(locator)
+            state = element.get_attribute('disabled')
+            if state == 'true':
+                return False
+            elif state == 'false':
+                return True
